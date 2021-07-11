@@ -144,7 +144,7 @@ struct nvmm_cap_md {
 	uint64_t rsvd[6];
 };
 
-#endif /* !ASM_NVMM */
+#endif /* ASM_NVMM */
 
 /* -------------------------------------------------------------------------- */
 
@@ -746,7 +746,6 @@ typedef struct {
 #define x86_get_cpuid2(l, c, d)	cpuid_count(l, c, (uint32_t *)d)
 #endif
 
-/* -------------------------------------------------------------------------- */
 /* Control registers. */
 #if defined(__NetBSD__)
 #define x86_get_cr0()		rcr0()
@@ -766,9 +765,7 @@ typedef struct {
 #define x86_set_cr4(v)		load_cr4(v)
 #endif
 
-/* -------------------------------------------------------------------------- */
 /* Debug registers. */
-
 #if defined(__NetBSD__)
 #define x86_get_dr0()		rdr0()
 #define x86_get_dr1()		rdr1()
@@ -795,7 +792,7 @@ typedef struct {
 #define x86_set_dr3(v)		load_dr3(v)
 #define x86_set_dr6(v)		load_dr6(v)
 #define x86_set_dr7(v)		load_dr7(v)
-#endif /* __NetBSD__ */
+#endif
 
 static inline void
 x86_curthread_save_dbregs(uint64_t *drs)
@@ -819,18 +816,13 @@ x86_curthread_restore_dbregs(uint64_t *drs)
 	x86_set_dr7(drs[NVMM_X64_DR_DR7]);
 }
 
-/* -------------------------------------------------------------------------- */
 /* FPU. */
-
 #if defined(__NetBSD__)
-
 #define x86_curthread_save_fpu()	fpu_kern_enter()
 #define x86_curthread_restore_fpu()	fpu_kern_leave()
 #define x86_save_fpu(a, m)		fpu_area_save(a, m, true)
 #define x86_restore_fpu(a, m)		fpu_area_restore(a, m, true)
-
 #elif defined(__DragonFly__)
-
 #define x86_curthread_save_fpu()	/* TODO */
 #define x86_curthread_restore_fpu()	/* TODO */
 #define x86_save_fpu(a, m)				\
@@ -843,10 +835,8 @@ x86_curthread_restore_dbregs(uint64_t *drs)
 		__asm volatile("clts" ::: "memory");	\
 		fpurstor((union savefpu *)(a), m);	\
 	})
+#endif
 
-#endif /* __NetBSD__ */
-
-/* -------------------------------------------------------------------------- */
 /* XCRs. */
 static inline uint64_t
 x86_get_xcr(uint32_t xcr)
@@ -884,6 +874,6 @@ x86_set_xcr(uint32_t xcr, uint64_t val)
 
 #endif /* _KERNEL */
 
-#endif /* !ASM_NVMM */
+#endif /* ASM_NVMM */
 
-#endif /* !_NVMM_X86_H_ */
+#endif /* _NVMM_X86_H_ */
