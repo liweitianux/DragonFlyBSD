@@ -29,13 +29,31 @@
 #ifndef _NVMM_X86_H_
 #define _NVMM_X86_H_
 
-#if defined(__NetBSD__)
-#include <x86/specialreg.h>
-#elif defined(__DragonFly__)
+#include <sys/types.h>
+#include <sys/bitops.h>
 #include <machine/specialreg.h>
-#endif
 
 #include "nvmm_x86_asm.h"
+
+#if defined(__NetBSD__)
+
+#ifdef _KERNEL
+#include "nvmm_x86_netbsd.h"
+#endif
+
+#elif defined(__DragonFly__)
+
+#undef  __BIT
+#define __BIT(__n)		__BIT64(__n)
+#undef  __BITS
+#define __BITS(__m, __n)	__BITS64(__m, __n)
+#ifdef _KERNEL
+#include "nvmm_x86_dragonfly.h"
+#endif
+
+#else
+#error "Unsupported OS."
+#endif
 
 /* -------------------------------------------------------------------------- */
 
@@ -145,17 +163,6 @@ struct nvmm_cap_md {
 };
 
 /* -------------------------------------------------------------------------- */
-
-#include <sys/types.h>
-#if defined(__NetBSD__)
-#include <sys/bitops.h>
-#elif defined(__DragonFly__)
-#include <sys/bitops.h>
-#undef  __BIT
-#define __BIT(__n)		__BIT64(__n)
-#undef  __BITS
-#define __BITS(__m, __n)	__BITS64(__m, __n)
-#endif
 
 /* Segment state. */
 struct nvmm_x64_state_seg {
@@ -578,42 +585,6 @@ struct nvmm_vcpu_conf_tpr {
 
 /* -------------------------------------------------------------------------- */
 
-/*
- * Register defines. We mainly rely on the already-existing OS definitions.
- */
-
-#if defined(__DragonFly__)
-
-#define XCR0_X87		CPU_XFEATURE_X87	/* 0x00000001 */
-#define XCR0_SSE		CPU_XFEATURE_SSE	/* 0x00000002 */
-
-#define MSR_MISC_ENABLE		MSR_IA32_MISC_ENABLE	/* 0x1a0 */
-#define MSR_CR_PAT		MSR_PAT			/* 0x277 */
-#define MSR_SFMASK		MSR_SF_MASK		/* 0xc0000084 */
-#define MSR_KERNELGSBASE	MSR_KGSBASE		/* 0xc0000102 */
-#define MSR_NB_CFG		MSR_AMD_NB_CFG		/* 0xc001001f */
-#define MSR_IC_CFG		MSR_AMD_IC_CFG		/* 0xc0011021 */
-#define MSR_DE_CFG		MSR_AMD_DE_CFG		/* 0xc0011029 */
-#define MSR_UCODE_AMD_PATCHLEVEL MSR_AMD_PATCH_LEVEL	/* 0x0000008b */
-
-/* MSR_IA32_ARCH_CAPABILITIES (0x10a) */
-#define 	IA32_ARCH_RDCL_NO	IA32_ARCH_CAP_RDCL_NO
-#define 	IA32_ARCH_IBRS_ALL	IA32_ARCH_CAP_IBRS_ALL
-#define 	IA32_ARCH_RSBA		IA32_ARCH_CAP_RSBA
-#define 	IA32_ARCH_SKIP_L1DFL_VMENTRY	IA32_ARCH_CAP_SKIP_L1DFL_VMENTRY
-#define 	IA32_ARCH_SSB_NO	IA32_ARCH_CAP_SSB_NO
-#define 	IA32_ARCH_MDS_NO	IA32_ARCH_CAP_MDS_NO
-#define 	IA32_ARCH_IF_PSCHANGE_MC_NO	IA32_ARCH_CAP_IF_PSCHANGE_MC_NO
-#define 	IA32_ARCH_TSX_CTRL	IA32_ARCH_CAP_TSX_CTRL
-#define 	IA32_ARCH_TAA_NO	IA32_ARCH_CAP_TAA_NO
-
-/* MSR_IA32_FLUSH_CMD (0x10b) */
-#define 	IA32_FLUSH_CMD_L1D_FLUSH	IA32_FLUSH_CMD_L1D
-
-#endif /* __DragonFly__ */
-
-/* -------------------------------------------------------------------------- */
-
 #ifdef _KERNEL
 #define NVMM_X86_MACH_NCONF	0
 #define NVMM_X86_VCPU_NCONF	2
@@ -647,140 +618,10 @@ uint32_t nvmm_x86_xsave_size(uint64_t);
 
 /* -------------------------------------------------------------------------- */
 
-/*
- * ASM defines. We mainly rely on the already-existing OS definitions.
- */
-
-#if defined(__NetBSD__)
-#include <x86/fpu.h>
-#elif defined(__DragonFly__)
-#include <machine/cpufunc.h>
-#include <machine/npx.h>
-#endif
-
 /* CPUID. */
 typedef struct {
 	uint32_t eax, ebx, ecx, edx;
 } cpuid_desc_t;
-
-#if defined(__NetBSD__)
-#define x86_get_cpuid(l, d)	x86_cpuid(l, (uint32_t *)d)
-#define x86_get_cpuid2(l, c, d)	x86_cpuid2(l, c, (uint32_t *)d)
-#elif defined(__DragonFly__)
-#define x86_get_cpuid(l, d)	do_cpuid(l, (uint32_t *)d)
-#define x86_get_cpuid2(l, c, d)	cpuid_count(l, c, (uint32_t *)d)
-#endif
-
-/* Control registers. */
-#if defined(__NetBSD__)
-#define x86_get_cr0()		rcr0()
-#define x86_get_cr2()		rcr2()
-#define x86_get_cr3()		rcr3()
-#define x86_get_cr4()		rcr4()
-#define x86_set_cr0(v)		lcr0(v)
-#define x86_set_cr2(v)		lcr2(v)
-#define x86_set_cr4(v)		lcr4(v)
-#elif defined(__DragonFly__)
-#define x86_get_cr0()		rcr0()
-#define x86_get_cr2()		rcr2()
-#define x86_get_cr3()		rcr3()
-#define x86_get_cr4()		rcr4()
-#define x86_set_cr0(v)		load_cr0(v)
-#define x86_set_cr2(v)		load_cr2(v)
-#define x86_set_cr4(v)		load_cr4(v)
-#endif
-
-/* Debug registers. */
-#if defined(__NetBSD__)
-#include <x86/dbregs.h>
-static inline void
-x86_curthread_save_dbregs(uint64_t *drs __unused)
-{
-	x86_dbregs_save(curlwp);
-}
-static inline void
-x86_curthread_restore_dbregs(uint64_t *drs __unused)
-{
-	x86_dbregs_restore(curlwp);
-}
-#define x86_get_dr0()		rdr0()
-#define x86_get_dr1()		rdr1()
-#define x86_get_dr2()		rdr2()
-#define x86_get_dr3()		rdr3()
-#define x86_get_dr6()		rdr6()
-#define x86_get_dr7()		rdr7()
-#define x86_set_dr0(v)		ldr0(v)
-#define x86_set_dr1(v)		ldr1(v)
-#define x86_set_dr2(v)		ldr2(v)
-#define x86_set_dr3(v)		ldr3(v)
-#define x86_set_dr6(v)		ldr6(v)
-#define x86_set_dr7(v)		ldr7(v)
-#elif defined(__DragonFly__)
-#include <sys/proc.h> /* struct lwp */
-static inline void
-x86_curthread_save_dbregs(uint64_t *drs)
-{
-	struct pcb *pcb = curthread->td_lwp->lwp_thread->td_pcb;
-
-	if (__predict_true(!(pcb->pcb_flags & PCB_DBREGS)))
-		return;
-
-	drs[NVMM_X64_DR_DR0] = rdr0();
-	drs[NVMM_X64_DR_DR1] = rdr1();
-	drs[NVMM_X64_DR_DR2] = rdr2();
-	drs[NVMM_X64_DR_DR3] = rdr3();
-	drs[NVMM_X64_DR_DR6] = rdr6();
-	drs[NVMM_X64_DR_DR7] = rdr7();
-}
-static inline void
-x86_curthread_restore_dbregs(uint64_t *drs)
-{
-	struct pcb *pcb = curthread->td_lwp->lwp_thread->td_pcb;
-
-	if (__predict_true(!(pcb->pcb_flags & PCB_DBREGS)))
-		return;
-
-	load_dr0(drs[NVMM_X64_DR_DR0]);
-	load_dr1(drs[NVMM_X64_DR_DR1]);
-	load_dr2(drs[NVMM_X64_DR_DR2]);
-	load_dr3(drs[NVMM_X64_DR_DR3]);
-	load_dr6(drs[NVMM_X64_DR_DR6]);
-	load_dr7(drs[NVMM_X64_DR_DR7]);
-}
-#define x86_get_dr0()		rdr0()
-#define x86_get_dr1()		rdr1()
-#define x86_get_dr2()		rdr2()
-#define x86_get_dr3()		rdr3()
-#define x86_get_dr6()		rdr6()
-#define x86_get_dr7()		rdr7()
-#define x86_set_dr0(v)		load_dr0(v)
-#define x86_set_dr1(v)		load_dr1(v)
-#define x86_set_dr2(v)		load_dr2(v)
-#define x86_set_dr3(v)		load_dr3(v)
-#define x86_set_dr6(v)		load_dr6(v)
-#define x86_set_dr7(v)		load_dr7(v)
-#endif
-
-/* FPU. */
-#if defined(__NetBSD__)
-#define x86_curthread_save_fpu()	fpu_kern_enter()
-#define x86_curthread_restore_fpu()	fpu_kern_leave()
-#define x86_save_fpu(a, m)		fpu_area_save(a, m, true)
-#define x86_restore_fpu(a, m)		fpu_area_restore(a, m, true)
-#elif defined(__DragonFly__)
-#define x86_curthread_save_fpu()	/* TODO */
-#define x86_curthread_restore_fpu()	/* TODO */
-#define x86_save_fpu(a, m)				\
-	({						\
-		fpusave((union savefpu *)(a), m);	\
-		load_cr0(rcr0() | CR0_TS);		\
-	})
-#define x86_restore_fpu(a, m)				\
-	({						\
-		__asm volatile("clts" ::: "memory");	\
-		fpurstor((union savefpu *)(a), m);	\
-	})
-#endif
 
 /* XCRs. */
 static inline uint64_t
@@ -811,11 +652,6 @@ x86_set_xcr(uint32_t xcr, uint64_t val)
 		: "memory"
 	);
 }
-
-#if defined(__DragonFly__)
-#define x86_xsave_features	npx_xcr0_mask
-#define x86_fpu_mxcsr_mask	npx_mxcsr_mask
-#endif
 
 #endif /* _KERNEL */
 
