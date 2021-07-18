@@ -35,9 +35,9 @@
 #include <machine/specialreg.h>
 #endif
 
-/* -------------------------------------------------------------------------- */
+#include "nvmm_x86_asm.h"
 
-#ifndef ASM_NVMM
+/* -------------------------------------------------------------------------- */
 
 struct nvmm_x86_exit_memory {
 	int prot;
@@ -144,82 +144,7 @@ struct nvmm_cap_md {
 	uint64_t rsvd[6];
 };
 
-#endif /* ASM_NVMM */
-
 /* -------------------------------------------------------------------------- */
-
-/*
- * State indexes. We use X64 as naming convention, not to confuse with X86
- * which originally implied 32bit.
- */
-
-/* Segments. */
-#define NVMM_X64_SEG_ES			0
-#define NVMM_X64_SEG_CS			1
-#define NVMM_X64_SEG_SS			2
-#define NVMM_X64_SEG_DS			3
-#define NVMM_X64_SEG_FS			4
-#define NVMM_X64_SEG_GS			5
-#define NVMM_X64_SEG_GDT		6
-#define NVMM_X64_SEG_IDT		7
-#define NVMM_X64_SEG_LDT		8
-#define NVMM_X64_SEG_TR			9
-#define NVMM_X64_NSEG			10
-
-/* General Purpose Registers. */
-#define NVMM_X64_GPR_RAX		0
-#define NVMM_X64_GPR_RCX		1
-#define NVMM_X64_GPR_RDX		2
-#define NVMM_X64_GPR_RBX		3
-#define NVMM_X64_GPR_RSP		4
-#define NVMM_X64_GPR_RBP		5
-#define NVMM_X64_GPR_RSI		6
-#define NVMM_X64_GPR_RDI		7
-#define NVMM_X64_GPR_R8			8
-#define NVMM_X64_GPR_R9			9
-#define NVMM_X64_GPR_R10		10
-#define NVMM_X64_GPR_R11		11
-#define NVMM_X64_GPR_R12		12
-#define NVMM_X64_GPR_R13		13
-#define NVMM_X64_GPR_R14		14
-#define NVMM_X64_GPR_R15		15
-#define NVMM_X64_GPR_RIP		16
-#define NVMM_X64_GPR_RFLAGS		17
-#define NVMM_X64_NGPR			18
-
-/* Control Registers. */
-#define NVMM_X64_CR_CR0			0
-#define NVMM_X64_CR_CR2			1
-#define NVMM_X64_CR_CR3			2
-#define NVMM_X64_CR_CR4			3
-#define NVMM_X64_CR_CR8			4
-#define NVMM_X64_CR_XCR0		5
-#define NVMM_X64_NCR			6
-
-/* Debug Registers. */
-#define NVMM_X64_DR_DR0			0
-#define NVMM_X64_DR_DR1			1
-#define NVMM_X64_DR_DR2			2
-#define NVMM_X64_DR_DR3			3
-#define NVMM_X64_DR_DR6			4
-#define NVMM_X64_DR_DR7			5
-#define NVMM_X64_NDR			6
-
-/* MSRs. */
-#define NVMM_X64_MSR_EFER		0
-#define NVMM_X64_MSR_STAR		1
-#define NVMM_X64_MSR_LSTAR		2
-#define NVMM_X64_MSR_CSTAR		3
-#define NVMM_X64_MSR_SFMASK		4
-#define NVMM_X64_MSR_KERNELGSBASE	5
-#define NVMM_X64_MSR_SYSENTER_CS	6
-#define NVMM_X64_MSR_SYSENTER_ESP	7
-#define NVMM_X64_MSR_SYSENTER_EIP	8
-#define NVMM_X64_MSR_PAT		9
-#define NVMM_X64_MSR_TSC		10
-#define NVMM_X64_NMSR			11
-
-#ifndef ASM_NVMM
 
 #include <sys/types.h>
 #if defined(__NetBSD__)
@@ -893,7 +818,5 @@ x86_set_xcr(uint32_t xcr, uint64_t val)
 #endif
 
 #endif /* _KERNEL */
-
-#endif /* ASM_NVMM */
 
 #endif /* _NVMM_X86_H_ */

@@ -29,10 +29,10 @@
 #define LOCORE
 #include <machine/asmacros.h>
 #include <machine/segments.h>
+#include <machine/specialreg.h>
 #include "assym.s"
 
-#define ASM_NVMM
-#include "nvmm_x86.h"
+#include "nvmm_x86_asm.h"
 
 	.text
 

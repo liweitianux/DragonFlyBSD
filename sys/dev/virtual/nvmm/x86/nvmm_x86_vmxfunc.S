@@ -32,8 +32,7 @@
 
 #define _C_LABEL(x)	x
 
-#define ASM_NVMM
-#include "nvmm_x86.h"
+#include "nvmm_x86_asm.h"
 
 	.text
 
